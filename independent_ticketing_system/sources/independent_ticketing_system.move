@@ -77,6 +77,11 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     // Royalty percentage validation
     assert!(royalty_percentage <= 100, INVALID_ROYALTY);
 
+    // Check that the coin balance is sufficient (>= 1 IOTA)
+    let coin_balance = coin::balance(coin);
+    let bal_value = coin_balance.value();
+    assert!(bal_value >= 1, NOT_ENOUGH_FUNDS);
+
     let name: string::String = string::utf8(b"Event Ticket NFT");
 
     let nft = TicketNFT {
