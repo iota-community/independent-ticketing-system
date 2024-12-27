@@ -26,14 +26,20 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         owner: address,               // Address of the owner
         name: string::String,         // Name of the NFT
         event_id: string::String,     // Event ID for the ticket
-        seat_number: u64,  // Seat number for the ticket
+        seat_number: u64,             // Seat number for the ticket
         event_date: u64,              // Event date like 31122024 i.e 31/12/2024
     }
 
-    // ===== Constants =====
+    // error codes
+    #[error]
+     const NOT_CREATOR: vector<u8> = b"Only owner can mint new tickets";
+    #[error]
+     const NOT_OWNER: vector<u8> = b"Sender is not owner";
 
-    /// The address of the package deployer (only deployer can mint tickets)
-    const DEPLOYER: address = @0x9381dc2d654d2d1bf401be954a8ffa20d794acaa13bb00d6eb4f2851d3239e43;
+    // ===== Constants =====
+   
+    /// The address of the package creator (only creator can mint tickets)
+    const CREATOR: address = @0x9381dc2d654d2d1bf401be954a8ffa20d794acaa13bb00d6eb4f2851d3239e43;
 
     // ===== Public view functions =====
 
@@ -54,8 +60,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     ) {
         let sender = tx_context::sender(ctx);
         
-        // Ensure only the deployer can mint tickets
-        assert!(sender == DEPLOYER, 0x1); // Error code 0x1 indicates unauthorized minting attempt
+        // Ensure only the CREATOR can mint tickets
+        assert!(sender == CREATOR, NOT_CREATOR); 
 
         let name: string::String = string::utf8(b"Event Ticket NFT");
 
@@ -81,4 +87,30 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
         transfer::public_transfer(nft, owner);
     }
+
+    // Transfer `nft` to `recipient`
+    public fun transfer_ticket(
+        nft: TicketNFT,
+        recipient: address,
+        ctx: &mut TxContext
+
+    ) {
+        let sender = tx_context::sender(ctx);
+         assert!(sender == nft.owner, NOT_OWNER);
+        transfer::public_transfer(nft, recipient);
+    }
+
+    #[allow(unused_variable)]       
+    /// Permanently delete `nft`
+    public fun burn(nft: TicketNFT, _: &mut TxContext) {
+        let TicketNFT { id,
+            name,
+            creator,
+            owner,
+            event_id,
+            seat_number,
+            event_date, } = nft;
+        object::delete(id);
+    }
+
 }
