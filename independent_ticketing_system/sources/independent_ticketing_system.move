@@ -62,57 +62,61 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     // ===== Entrypoints =====
 
-    /// Mint a new ticket NFT with metadata, requiring 1 gas token for the creator
-   public fun mint_ticket(
-    coin: &mut Coin<IOTA>,
-    owner: address,
-    event_id: string::String,
-    seat_number: u64,
-    event_date: u64,
-    royalty_percentage: u8,
-    ctx: &mut TxContext
-) {
-    let sender = tx_context::sender(ctx);
+   /// Mint a new ticket NFT with metadata, requiring 1 gas token for the creator
+    public fun mint_ticket(
+        coin: &mut Coin<IOTA>,
+        owner: address,
+        event_id: string::String,
+        seat_number: u64,
+        event_date: u64,
+        royalty_percentage: u8,
+        ctx: &mut TxContext
+    ) {
+        let sender = tx_context::sender(ctx);
 
-    // Royalty percentage validation
-    assert!(royalty_percentage <= 100, INVALID_ROYALTY);
+        // Royalty percentage validation
+        assert!(royalty_percentage <= 100, INVALID_ROYALTY);
 
-    // Check that the coin balance is sufficient (>= 1 IOTA)
-    let coin_balance = coin::balance(coin);
-    let bal_value = coin_balance.value();
-    assert!(bal_value >= 1, NOT_ENOUGH_FUNDS);
+        // Check that the coin balance is sufficient (>= 1 IOTA)
+        let coin_balance = coin::balance(coin);
+        let bal_value = coin_balance.value();
+        assert!(bal_value >= 1, NOT_ENOUGH_FUNDS);
 
-    let name: string::String = string::utf8(b"Event Ticket NFT");
+        let name: string::String = string::utf8(b"Event Ticket NFT");
 
-    let nft = TicketNFT {
-        id: object::new(ctx),
-        name,
-        creator: sender,
-        owner,
-        event_id,
-        seat_number,
-        event_date,
-        royalty_percentage,
-    };
+        let nft = TicketNFT {
+            id: object::new(ctx),
+            name,
+            creator: sender,
+            owner,
+            event_id,
+            seat_number,
+            event_date,
+            royalty_percentage,
+        };
 
-    // Split the coin into two parts
-    let new_coin = coin::split(coin, 1, ctx);
-    // Transfer 1 SUI to the creator
-    iota::transfer::public_transfer(new_coin, CREATOR);
+        // Extract the object ID before moving the `nft`
+        let nft_id = object::id(&nft);
 
-    // Transfer NFT to owner
-    transfer::public_transfer(nft, owner);
+        // Split the coin into two parts
+        let new_coin = coin::split(coin, 1, ctx);
+        // Transfer 1 IOTA to the creator
+        iota::transfer::public_transfer(new_coin, CREATOR);
 
-    event::emit(NFTMinted {
-        object_id: object::id(&nft),
-        creator: sender,
-        owner,
-        name: nft.name,
-        event_id,
-        seat_number,
-        event_date,
-    });
-}
+        // Transfer NFT to owner
+        transfer::public_transfer(nft, owner);
+
+        // Emit event using the extracted ID
+        event::emit(NFTMinted {
+            object_id: nft_id,
+            creator: sender,
+            owner,
+            name,
+            event_id,
+            seat_number,
+            event_date,
+        });
+    }
 
     /// Transfer `nft` to `recipient`
     public fun transfer_ticket(
