@@ -20,6 +20,15 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         royalty_percentage: u8,      // Optional royalty percentage for the creator (0-100)
     }
 
+    // A struct representing the creator of package
+    public struct Creator {
+        address: address
+    }
+
+    // A struct representing the total number of seats
+    public struct TotalSeat {
+        value: u64
+    }
     // ===== Events =====
 
     /// Event emitted when a new ticket NFT is minted
@@ -52,6 +61,17 @@ module independent_ticketing_system::independent_ticketing_system_nft {
      const NOT_CREATOR: vector<u8> = b"Only owner can mint new tickets";
     #[error]
      const NOT_OWNER: vector<u8> = b"Sender is not owner";
+
+    // ==== Initializer function ====
+
+    fun init(total_seat:u64,ctx: &mut TxContext) {
+        transfer::share_object(Creator{
+            address:tx_context::sender(ctx)
+        });
+        transfer::share_object(TotalSeat {
+            value: total_seat
+        });
+    }
 
     // ===== Public view functions =====
 
@@ -156,8 +176,9 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         object::delete(id);
     }
 
-    // ===== Constants =====
+    // ==== Private functions ====
 
-    /// The address of the package creator (receives gas fees)
-    const CREATOR: address = @0x9381dc2d654d2d1bf401be954a8ffa20d794acaa13bb00d6eb4f2851d3239e43;
+    fun set_total_seat(value:u64,TotalSeat: TotalSeat) {
+        TotalSeat.value = value;
+    }
 }
