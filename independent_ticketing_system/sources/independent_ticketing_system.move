@@ -159,6 +159,20 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         // nft.is_transferred = true;
     }
 
+    public fun resale(
+        royalty_fee:u64,
+        coin: &mut Coin<IOTA>,
+        nft: &TicketNFT,
+        recipient:address) {
+
+        if(royalty>0) {
+            let new_coin = coin::split(coin, royalty, ctx);
+            transfer::public_transfer(new_coin,nft.creator);
+        }
+
+        transfer_ticket(nft,recipient);
+    }
+
     #[allow(unused_variable)]
     /// Permanently delete `nft`
     public fun burn(nft: TicketNFT, ctx: &mut TxContext) {
