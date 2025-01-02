@@ -1,10 +1,6 @@
 module independent_ticketing_system::independent_ticketing_system_nft {
-    use iota::object::{UID, ID};
-    use iota::tx_context::{Self, TxContext};
-    use iota::object;
     use std::string;
     use iota::event;
-    use iota::transfer;
     use iota::coin::{Self, Coin};
     use iota::iota::IOTA; 
 
@@ -21,12 +17,14 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     // A struct representing the creator of package
-    public struct Creator {
+    public struct Creator has key, store{
+        id:UID,
         address: address
     }
 
     // A struct representing the total number of seats
-    public struct TotalSeat {
+    public struct TotalSeat has key, store{
+        id: UID,
         value: u64
     }
     // ===== Events =====
@@ -64,12 +62,14 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     // ==== Initializer function ====
 
-    fun init(total_seat:u64,ctx: &mut TxContext) {
+    fun init(ctx: &mut TxContext) {
         transfer::share_object(Creator{
+            id: object::new(ctx),
             address:tx_context::sender(ctx)
         });
         transfer::share_object(TotalSeat {
-            value: total_seat
+            id: object::new(ctx),
+            value: 300
         });
     }
 
@@ -90,6 +90,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         seat_number: u64,
         event_date: u64,
         royalty_percentage: u8,
+        package_creator: address,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
@@ -121,7 +122,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         // Split the coin into two parts
         let new_coin = coin::split(coin, 1, ctx);
         // Transfer 1 IOTA to the creator
-        iota::transfer::public_transfer(new_coin, CREATOR);
+        transfer::public_transfer(new_coin, package_creator);
 
         // Transfer NFT to owner
         transfer::public_transfer(nft, owner);
@@ -162,15 +163,20 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     public fun resale(
         royalty_fee:u64,
         coin: &mut Coin<IOTA>,
-        nft: &TicketNFT,
-        recipient:address) {
+        nft: TicketNFT,
+        recipient:address,
+        ctx: &mut TxContext
+        ) {
 
-        if(royalty>0) {
-            let new_coin = coin::split(coin, royalty, ctx);
-            transfer::public_transfer(new_coin,nft.creator);
+        let sender = tx_context::sender(ctx);
+        let creator = nft.creator;
+        assert!(sender == nft.owner, NOT_OWNER);
+        transfer::public_transfer(nft, recipient);
+
+        if(royalty_fee>0) {
+            let new_coin = coin::split(coin, royalty_fee, ctx);
+            transfer::public_transfer(new_coin,creator);
         }
-
-        transfer_ticket(nft,recipient);
     }
 
     #[allow(unused_variable)]
@@ -192,7 +198,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     // ==== Private functions ====
 
-    fun set_total_seat(value:u64,TotalSeat: TotalSeat) {
-        TotalSeat.value = value;
+    fun set_total_seat(value:u64,total_seat: &mut TotalSeat) {
+        total_seat.value = value;
     }
 }
