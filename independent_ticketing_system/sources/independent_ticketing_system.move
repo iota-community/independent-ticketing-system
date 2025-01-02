@@ -205,4 +205,34 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     fun set_total_seat(value:u64,total_seat: &mut TotalSeat) {
         total_seat.value = value;
     }
+    // Just for testing purpose
+    public fun create_TicketNFT(
+        name: string::String,
+        creator: address,
+        owner: address, 
+        event_id: string::String,
+        seat_number: u64,
+        event_date: u64,
+        royalty_percentage: u8,
+        ctx: &mut TxContext
+        ) : TicketNFT {
+        let nft : TicketNFT = TicketNFT {
+            id:object::new(ctx),
+            name,
+            creator,
+            owner,
+            event_id,
+            seat_number,
+            event_date,
+            royalty_percentage,
+        };
+        nft
+    }
+    public fun create_TotalSeat(value:u64,ctx: &mut TxContext) : TotalSeat {
+        let mut total_seat = TotalSeat {
+            id:object::new(ctx),
+            value
+        };
+        total_seat
+    }
 }
