@@ -1,7 +1,7 @@
 module independent_ticketing_system::independent_ticketing_system_nft {
     use std::string;
     use iota::event;
-    use iota::coin::{Self, Coin};
+    use iota::coin::{Coin};
     use iota::iota::IOTA; 
 
     /// A struct representing a ticket NFT with detailed metadata
@@ -40,25 +40,17 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         event_date: u64,              // Event date like 31122024 i.e 31/12/2024
     }
 
-    /// Event emitted when a ticket is resold
-    public struct TicketResold has copy, drop {
-        nft_id: ID,                  // The Object ID of the resold NFT
-        old_owner: address,           // Address of the previous owner
-        new_owner: address,           // Address of the new owner
-        price: u64,                   // Resale price of the ticket
-    }
-
     // Error codes
     #[error]
      const NOT_ENOUGH_FUNDS: vector<u8> = b"Insufficient funds for gas and NFT transfer";
     #[error]
     const INVALID_ROYALTY: vector<u8> = b"Royalty percentage must be between 0 and 100";
     #[error]
-    const INVALID_STATE: vector<u8> = b"Ticket already transferred";
-    #[error]
      const NOT_CREATOR: vector<u8> = b"Only owner can mint new tickets";
     #[error]
-     const NOT_OWNER: vector<u8> = b"Sender is not owner";
+    const NOT_OWNER: vector<u8> = b"Sender is not owner";
+    #[error]
+    const ALL_TICKETS_SOLD: vector<u8> = b"All tickets has been sold out";
 
     // ==== Initializer function ====
 
@@ -84,26 +76,32 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
    /// Mint a new ticket NFT with metadata, requiring 1 gas token for the creator
     public fun mint_ticket(
-        coin: &mut Coin<IOTA>,
+        mut coin: Coin<IOTA>,
         owner: address,
         event_id: string::String,
-        seat_number: u64,
         event_date: u64,
         royalty_percentage: u8,
         package_creator: address,
+        total_seat: &mut TotalSeat,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
+
+        assert!(sender==package_creator,NOT_CREATOR);
+
+        assert!(total_seat.value>0,ALL_TICKETS_SOLD);
 
         // Royalty percentage validation
         assert!(royalty_percentage <= 100, INVALID_ROYALTY);
 
         // Check that the coin balance is sufficient (>= 1 IOTA)
-        let coin_balance = coin::balance(coin);
-        let bal_value = coin_balance.value();
+        // let coin_balance = coin::balance(coin);
+        let bal_value = coin.value();
         assert!(bal_value >= 1, NOT_ENOUGH_FUNDS);
 
         let name: string::String = string::utf8(b"Event Ticket NFT");
+
+        let nft_count = total_seat.value;
 
         let nft = TicketNFT {
             id: object::new(ctx),
@@ -111,22 +109,24 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             creator: sender,
             owner,
             event_id,
-            seat_number,
+            seat_number:total_seat.value,
             event_date,
             royalty_percentage,
         };
+
+        set_total_seat(nft_count-1,total_seat);
 
         // Extract the object ID before moving the `nft`
         let nft_id = object::id(&nft);
 
         // Split the coin into two parts
-        let new_coin = coin::split(coin, 1, ctx);
+        let new_coin = coin.split(1, ctx);
         // Transfer 1 IOTA to the creator
         transfer::public_transfer(new_coin, package_creator);
 
         // Transfer NFT to owner
         transfer::public_transfer(nft, owner);
-
+        coin.destroy_zero();
         // Emit event using the extracted ID
         event::emit(NFTMinted {
             object_id: nft_id,
@@ -134,7 +134,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             owner,
             name,
             event_id,
-            seat_number,
+            seat_number:nft_count,
             event_date,
         });
     }
@@ -162,7 +162,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     public fun resale(
         royalty_fee:u64,
-        coin: &mut Coin<IOTA>,
+        mut coin: Coin<IOTA>,
         nft: TicketNFT,
         recipient:address,
         ctx: &mut TxContext
@@ -171,11 +171,15 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         let sender = tx_context::sender(ctx);
         let creator = nft.creator;
         assert!(sender == nft.owner, NOT_OWNER);
+        assert!(coin.balance().value()>royalty_fee,NOT_ENOUGH_FUNDS);
         transfer::public_transfer(nft, recipient);
 
         if(royalty_fee>0) {
-            let new_coin = coin::split(coin, royalty_fee, ctx);
+            let new_coin = coin.split(royalty_fee, ctx);
             transfer::public_transfer(new_coin,creator);
+            coin.destroy_zero();
+        } else {
+            coin.destroy_zero();
         }
     }
 
