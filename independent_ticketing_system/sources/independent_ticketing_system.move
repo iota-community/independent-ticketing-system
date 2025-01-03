@@ -67,16 +67,11 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     // ===== Public view functions =====
 
-    /// Get the ticket NFT's `name`
-    public fun name(nft: &TicketNFT): &string::String {
-        &nft.name
-    }
-
     // ===== Entrypoints =====
 
    /// Mint a new ticket NFT with metadata, requiring 1 gas token for the creator
     public fun mint_ticket(
-        mut coin: Coin<IOTA>,
+        coin: &mut Coin<IOTA>,
         owner: address,
         event_id: string::String,
         event_date: u64,
@@ -126,7 +121,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
         // Transfer NFT to owner
         transfer::public_transfer(nft, owner);
-        coin.destroy_zero();
         // Emit event using the extracted ID
         event::emit(NFTMinted {
             object_id: nft_id,
@@ -162,7 +156,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     public fun resale(
         royalty_fee:u64,
-        mut coin: Coin<IOTA>,
+        coin: &mut Coin<IOTA>,
         nft: TicketNFT,
         recipient:address,
         ctx: &mut TxContext
@@ -177,9 +171,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         if(royalty_fee>0) {
             let new_coin = coin.split(royalty_fee, ctx);
             transfer::public_transfer(new_coin,creator);
-            coin.destroy_zero();
-        } else {
-            coin.destroy_zero();
         }
     }
 
