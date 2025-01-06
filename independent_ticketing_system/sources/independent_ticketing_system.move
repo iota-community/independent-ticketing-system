@@ -63,8 +63,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     #[error]
     const ALL_TICKETS_SOLD: vector<u8> = b"All tickets has been sold out";
     #[error]
-    const INVALID_NFT: vector<u8> = b"NFT has not any initiated resale";
-    #[error]
     const NOT_BUYER: vector<u8> = b"Sender is not buyer";
     #[error]
     const USER_NOT_WHITELISTED: vector<u8> = b"Recipient is not whitelisted";
@@ -87,20 +85,20 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     // ===== Entrypoints =====
 
    /// Mint a new ticket NFT with metadata, requiring 1 gas token for the creator
-    public fun mint_ticket(
+    public entry fun mint_ticket(
         coin: &mut Coin<IOTA>,
         owner: address,
         event_id: string::String,
         event_date: u64,
         royalty_percentage: u64,
-        package_creator: address,
+        package_creator: &mut Creator,
         total_seat: &mut TotalSeat,
         price: u64,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
 
-        assert!(sender==package_creator,NOT_CREATOR);
+        assert!(sender==package_creator.address,NOT_CREATOR);
 
         assert!(total_seat.value>0,ALL_TICKETS_SOLD);
 
@@ -137,7 +135,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         // Split the coin into two parts
         let new_coin = coin.split(1, ctx);
         // Transfer 1 IOTA to the creator
-        transfer::public_transfer(new_coin, package_creator);
+        transfer::public_transfer(new_coin, package_creator.address);
 
         // Transfer NFT to owner
         transfer::public_transfer(nft, owner);
@@ -154,8 +152,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     /// Transfer `nft` to `recipient`
-    public fun transfer_ticket(
-        nft: TicketNFT,
+    public entry fun transfer_ticket(
+        mut nft: TicketNFT,
         recipient: address,
         ctx: &mut TxContext
     ) {
@@ -166,7 +164,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         // You'll need a way to track this, e.g., a boolean field in TicketNFT or a separate data structure.
         // Example (using a hypothetical `is_transferred` field):
         // assert!(!nft.is_transferred, INVALID_STATE);
-
+        nft.owner = recipient;
         transfer::public_transfer(nft, recipient);
 
         // Update the ticket's state to indicate it has been transferred
@@ -174,26 +172,23 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         // nft.is_transferred = true;
     }
 
-    public fun resale(
-        coin: &mut Coin<IOTA>,
+    #[allow(unused_variable)]
+    public entry fun resale(
         nft: TicketNFT,
         recipient:address,
         ctx: &mut TxContext
         ) {
 
         let sender = tx_context::sender(ctx);
-        let creator = nft.creator;
         assert!(sender == nft.owner, NOT_OWNER);
         assert!(vector::contains(nft.whitelisted_addresses, recipient),USER_NOT_WHITELISTED);
-        let new_coin = coin.split(royalty_fee, ctx);
-        transfer::public_transfer(new_coin,creator);
 
         let initiate_resale = InitiateResale {
             id: object::new(ctx),
             seller:sender,
             buyer:recipient,
             price:nft.price,
-            nft,
+            nft
         };
         transfer::public_transfer(initiate_resale,recipient);
     }
@@ -215,7 +210,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     #[allow(unused_variable)]
     /// Permanently delete `nft`
-    public fun burn(nft: TicketNFT, ctx: &mut TxContext) {
+    public entry fun burn(nft: TicketNFT, ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
         assert!(sender == nft.owner, NOT_OWNER); // Only owner can burn
 
@@ -227,7 +222,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             seat_number,
             event_date,
             royalty_percentage,
-            price } = nft;
+            price,
+            whitelisted_addresses } = nft;
         object::delete(id);
     }
 
