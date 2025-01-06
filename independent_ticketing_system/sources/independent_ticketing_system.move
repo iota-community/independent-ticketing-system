@@ -14,7 +14,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         seat_number: u64,   // Seat number assigned to the ticket
         event_date: u64,               // Event date in Unix timestamp format
         royalty_percentage: u64,      // Optional royalty percentage for the creator (0-100)
-        price: u64
+        price: u64,
+        whitelisted_addresses: vector<address>
     }
 
     // A struct representing the creator of package
@@ -65,6 +66,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     const INVALID_NFT: vector<u8> = b"NFT has not any initiated resale";
     #[error]
     const NOT_BUYER: vector<u8> = b"Sender is not buyer";
+    #[error]
+    const USER_NOT_WHITELISTED: vector<u8> = b"Recipient is not whitelisted";
 
     // ==== Initializer function ====
 
@@ -122,7 +125,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             seat_number:total_seat.value,
             event_date,
             royalty_percentage,
-            price
+            price,
+            whitelisted_addresses: vector::empty<address>()
         };
 
         set_total_seat(nft_count-1,total_seat);
@@ -180,7 +184,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         let sender = tx_context::sender(ctx);
         let creator = nft.creator;
         assert!(sender == nft.owner, NOT_OWNER);
-
+        assert!(vector::contains(nft.whitelisted_addresses, recipient),USER_NOT_WHITELISTED);
         let new_coin = coin.split(royalty_fee, ctx);
         transfer::public_transfer(new_coin,creator);
 
@@ -232,6 +236,12 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     fun set_total_seat(value:u64,total_seat: &mut TotalSeat) {
         total_seat.value = value;
     }
+
+    #[allow(unused_variable)]
+    public entry fun whitelist_buyer(user:address,nft: &mut TicketNFT) {
+        vector::push_back(&mut nft.whitelisted_addresses,user);
+    }
+
     // Just for testing purpose
     public fun create_TicketNFT(
         name: string::String,
@@ -242,6 +252,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         event_date: u64,
         royalty_percentage: u64,
         price:u64,
+        whitelisted_addresses: vector<address>,
         ctx: &mut TxContext
         ) : TicketNFT {
         let nft : TicketNFT = TicketNFT {
@@ -253,7 +264,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             seat_number,
             event_date,
             royalty_percentage,
-            price
+            price,
+            whitelisted_addresses
         };
         nft
     }
