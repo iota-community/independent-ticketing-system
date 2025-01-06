@@ -181,7 +181,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
         let sender = tx_context::sender(ctx);
         assert!(sender == nft.owner, NOT_OWNER);
-        assert!(vector::contains(nft.whitelisted_addresses, recipient),USER_NOT_WHITELISTED);
+        assert!(vector::contains(&nft.whitelisted_addresses, &recipient),USER_NOT_WHITELISTED);
 
         let initiate_resale = InitiateResale {
             id: object::new(ctx),
@@ -194,18 +194,25 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     #[allow(lint(self_transfer))]
-    public fun buy(coin: &mut Coin<IOTA>,nft:TicketNFT, initiated_resale: &mut InitiateResale,ctx: &mut TxContext) {
+    public entry fun buy_resale(coin: &mut Coin<IOTA>, initiated_resale: InitiateResale,ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
-        assert!(nft.owner==initiated_resale.seller,INVALID_NFT);
-        assert!(sender==initiated_resale.buyer,NOT_BUYER);
-        assert!(coin.balance().value()>initiated_resale.price);
+        let InitiateResale {id: id1,seller: seller1,buyer: buyer1,price: price1,nft: mut nft1} = initiated_resale;
+        
+        assert!(sender==buyer1,NOT_BUYER);
 
-        initiated_resale.nft.owner = sender;
-        transfer::public_transfer(nft,sender);
+        let royalty_fee = (nft1.royalty_percentage/nft1.price)*100;
+        assert!(coin.balance().value()>royalty_fee,NOT_ENOUGH_FUNDS);
 
-        let new_coin = coin.split(initiated_resale.price,ctx);
+        let new_coin = coin.split(royalty_fee, ctx);
+        transfer::public_transfer(new_coin,nft1.creator);
+        
+        nft1.owner = sender;
+        transfer::public_transfer(nft1,sender);
 
-        transfer::public_transfer(new_coin,initiated_resale.seller);
+        let new_coin = coin.split(price1,ctx);
+
+        transfer::public_transfer(new_coin,seller1);
+        object::delete(id1);
     }
 
     #[allow(unused_variable)]
