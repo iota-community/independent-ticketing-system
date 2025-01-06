@@ -194,6 +194,21 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         transfer::public_transfer(initiate_resale,recipient);
     }
 
+    #[allow(lint(self_transfer))]
+    public fun buy(coin: &mut Coin<IOTA>,nft:TicketNFT, initiated_resale: &mut InitiateResale,ctx: &mut TxContext) {
+        let sender = tx_context::sender(ctx);
+        assert!(nft.owner==initiated_resale.seller,INVALID_NFT);
+        assert!(sender==initiated_resale.buyer,NOT_BUYER);
+        assert!(coin.balance().value()>initiated_resale.price);
+
+        initiated_resale.nft.owner = sender;
+        transfer::public_transfer(nft,sender);
+
+        let new_coin = coin.split(initiated_resale.price,ctx);
+
+        transfer::public_transfer(new_coin,initiated_resale.seller);
+    }
+
     #[allow(unused_variable)]
     /// Permanently delete `nft`
     public fun burn(nft: TicketNFT, ctx: &mut TxContext) {
