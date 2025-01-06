@@ -36,6 +36,7 @@ module independent_ticketing_system::independent_ticketing_system_nft_test {
             5,
             3012025,
             5,
+            200,
             ts.ctx()
         );
         resale(1,payment,nft,BUYER,ts.ctx());
@@ -52,6 +53,7 @@ module independent_ticketing_system::independent_ticketing_system_nft_test {
             5,
             3012025,
             5,
+            200,
             ts.ctx()
         );
         burn(nft,ts.ctx());
@@ -69,6 +71,7 @@ module independent_ticketing_system::independent_ticketing_system_nft_test {
             5,
             3012025,
             5,
+            200,
             ts.ctx()
         );
         transfer_ticket(nft,BUYER,ts.ctx());
