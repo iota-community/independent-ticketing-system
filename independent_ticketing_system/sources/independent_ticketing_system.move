@@ -54,8 +54,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     const NOT_BUYER: vector<u8> = b"Sender is not buyer";
     #[error]
     const NOT_AUTHORISED_TO_BUY: vector<u8> = b"Recipient is not whitelisted";
-    #[error]
-    const NOT_AVAILABLE_TO_BUY: vector<u8> = b"TICKET is not available to buy";
 
     fun init(ctx: &mut TxContext) {
         transfer::share_object(Creator{
@@ -149,47 +147,30 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     #[allow(lint(self_transfer))]
-    public fun buy_ticket(coin: &mut Coin<IOTA>, 
+    public fun buy_ticket(
+    coin: &mut Coin<IOTA>, 
     nft_id: &mut UID,
     buyable_tickets: &mut AvailableTicketsToBuy,
-    creator: &mut Creator, 
-    ctx: &mut TxContext) {
+    _creator: &mut Creator, 
+    ctx: &mut TxContext
+    ) {
         let sender = tx_context::sender(ctx);
-        let nfts = &buyable_tickets.nfts;
-        let length = vector::length(nfts);
         let mut i = 0;
+        let length = vector::length(&buyable_tickets.nfts);
+        
         while (i < length) {
-            let nft = &nfts[i];
-            if (&nft.id == nft_id) {
-                let deleted_nft = vector::remove(&mut buyable_tickets.nfts, i);
-                let TicketNFT { id,
-                    name,
-                    creator,
-                    owner,
-                    event_id,
-                    seat_number,
-                    event_date,
-                    royalty_percentage,
-                    price,
-                    whitelisted_addresses } = deleted_nft;
-                assert!(vector::contains(&whitelisted_addresses, &sender),NOT_AUTHORISED_TO_BUY);
-
-                let new_coins = coin.split(nft.price,ctx);
-
-                transfer::public_transfer(new_coins,nft.creator);
-
-                transfer::public_transfer(TicketNFT {
-                    id,
-                    name,
-                    creator,
-                    owner,
-                    event_id,
-                    seat_number,
-                    event_date,
-                    royalty_percentage,
-                    price,
-                    whitelisted_addresses
-                },sender);
+            // Create a copy of the NFT data instead of keeping a reference
+            let current_nft = vector::borrow(&buyable_tickets.nfts, i);
+            if (&current_nft.id == nft_id) {
+                let mut deleted_nft = vector::remove(&mut buyable_tickets.nfts, i);
+                
+                assert!(vector::contains(&deleted_nft.whitelisted_addresses, &sender), NOT_AUTHORISED_TO_BUY);
+                
+                let payment = coin.split(deleted_nft.price, ctx);
+                transfer::public_transfer(payment, deleted_nft.creator);
+                
+                deleted_nft.owner = sender;
+                transfer::public_transfer(deleted_nft, sender);
                 break
             };
             i = i + 1;
