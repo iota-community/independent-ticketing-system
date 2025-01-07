@@ -1,6 +1,5 @@
 module independent_ticketing_system::independent_ticketing_system_nft {
     use std::string;
-    use iota::event;
     use iota::coin::{Coin};
     use iota::iota::IOTA; 
 
@@ -35,16 +34,9 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         price:u64,
     }
 
-    // ===== Events =====
-
-    public struct NFTMinted has copy, drop {
-        object_id: ID,
-        creator: address,
-        owner: address,
-        name: string::String,
-        event_id: string::String,
-        seat_number: u64,
-        event_date: u64,
+    public struct AvailableTicketsToBuy has key {
+        id: UID,
+        nfts: vector<TicketNFT>
     }
 
     // Error codes
@@ -62,6 +54,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     const NOT_BUYER: vector<u8> = b"Sender is not buyer";
     #[error]
     const NOT_AUTHORISED_TO_BUY: vector<u8> = b"Recipient is not whitelisted";
+    #[error]
+    const NOT_AVAILABLE_TO_BUY: vector<u8> = b"TICKET is not available to buy";
 
     fun init(ctx: &mut TxContext) {
         transfer::share_object(Creator{
@@ -72,16 +66,21 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             id: object::new(ctx),
             value: 300
         });
+
+        transfer::share_object(AvailableTicketsToBuy {
+            id: object::new(ctx),
+            nfts : vector::empty<TicketNFT>()
+        });
     }
 
     public entry fun mint_ticket(
         coin: &mut Coin<IOTA>,
-        owner: address,
         event_id: string::String,
         event_date: u64,
         royalty_percentage: u64,
         package_creator: &mut Creator,
         total_seat: &mut TotalSeat,
+        available_tickets: &mut AvailableTicketsToBuy,
         price: u64,
         ctx: &mut TxContext
     ) {
@@ -102,7 +101,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             id: object::new(ctx),
             name,
             creator: sender,
-            owner,
+            owner: sender,
             event_id,
             seat_number:total_seat.value,
             event_date,
@@ -113,21 +112,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
         set_total_seat(nft_count-1,total_seat);
 
-        let nft_id = object::id(&nft);
-
-        let new_coin = coin.split(1, ctx);
-        transfer::public_transfer(new_coin, package_creator.address);
-
-        transfer::public_transfer(nft, owner);
-        event::emit(NFTMinted {
-            object_id: nft_id,
-            creator: sender,
-            owner,
-            name,
-            event_id,
-            seat_number:nft_count,
-            event_date,
-        });
+        vector::push_back(&mut available_tickets.nfts, nft);
     }
 
     public entry fun transfer_ticket(
@@ -161,6 +146,54 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             nft
         };
         transfer::public_transfer(initiate_resale,recipient);
+    }
+
+    #[allow(lint(self_transfer))]
+    public fun buy_ticket(coin: &mut Coin<IOTA>, 
+    nft_id: &mut UID,
+    buyable_tickets: &mut AvailableTicketsToBuy,
+    creator: &mut Creator, 
+    ctx: &mut TxContext) {
+        let sender = tx_context::sender(ctx);
+        let nfts = &buyable_tickets.nfts;
+        let length = vector::length(nfts);
+        let mut i = 0;
+        while (i < length) {
+            let nft = &nfts[i];
+            if (&nft.id == nft_id) {
+                let deleted_nft = vector::remove(&mut buyable_tickets.nfts, i);
+                let TicketNFT { id,
+                    name,
+                    creator,
+                    owner,
+                    event_id,
+                    seat_number,
+                    event_date,
+                    royalty_percentage,
+                    price,
+                    whitelisted_addresses } = deleted_nft;
+                assert!(vector::contains(&whitelisted_addresses, &sender),NOT_AUTHORISED_TO_BUY);
+
+                let new_coins = coin.split(nft.price,ctx);
+
+                transfer::public_transfer(new_coins,nft.creator);
+
+                transfer::public_transfer(TicketNFT {
+                    id,
+                    name,
+                    creator,
+                    owner,
+                    event_id,
+                    seat_number,
+                    event_date,
+                    royalty_percentage,
+                    price,
+                    whitelisted_addresses
+                },sender);
+                break
+            };
+            i = i + 1;
+        };
     }
 
     #[allow(lint(self_transfer))]
