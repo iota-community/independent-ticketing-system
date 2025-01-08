@@ -72,13 +72,11 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     public entry fun mint_ticket(
-        coin: &mut Coin<IOTA>,
         event_id: string::String,
         event_date: u64,
-        royalty_percentage: u64,
+        royalty_percentage :u64,
         package_creator: &mut Creator,
         total_seat: &mut TotalSeat,
-        available_tickets: &mut AvailableTicketsToBuy,
         price: u64,
         ctx: &mut TxContext
     ) {
@@ -88,12 +86,13 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         assert!(total_seat.value>0,ALL_TICKETS_SOLD);
         assert!(royalty_percentage >= 0 && royalty_percentage <= 100, INVALID_ROYALTY);
 
-        let bal_value = coin.value();
-        assert!(bal_value >= 1, NOT_ENOUGH_FUNDS);
 
         let name: string::String = string::utf8(b"Event Ticket NFT");
 
         let nft_count = total_seat.value;
+
+        let mut whitelisted_addresses = vector::empty<address>();
+        vector::push_back(&mut whitelisted_addresses, sender);
 
         let nft = TicketNFT {
             id: object::new(ctx),
@@ -105,12 +104,20 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             event_date,
             royalty_percentage,
             price,
-            whitelisted_addresses: vector::empty<address>()
+            whitelisted_addresses
         };
 
         set_total_seat(nft_count-1,total_seat);
 
-        vector::push_back(&mut available_tickets.nfts, nft);
+        transfer::public_transfer(nft,sender);
+    }
+
+    public entry fun enable_ticket_to_buy(nft:TicketNFT,creator: &mut Creator,available_tickets: &mut AvailableTicketsToBuy,ctx: &mut TxContext) {
+        let sender = tx_context::sender(ctx);
+
+        assert!(sender==creator.address,NOT_CREATOR);
+
+        vector::push_back(&mut available_tickets.nfts,nft);
     }
 
     public entry fun transfer_ticket(
@@ -151,7 +158,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     coin: &mut Coin<IOTA>, 
     nft_id: &mut UID,
     buyable_tickets: &mut AvailableTicketsToBuy,
-    _creator: &mut Creator, 
     ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
