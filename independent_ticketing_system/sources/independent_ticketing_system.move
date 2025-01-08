@@ -2,6 +2,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     use std::string;
     use iota::coin::{Coin};
     use iota::iota::IOTA; 
+    use iota::event;
 
     public struct TicketNFT has key, store {
         id: UID,
@@ -39,6 +40,14 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         nfts: vector<TicketNFT>
     }
 
+    public struct TicketBoughtSuccessfully has copy, drop {
+        name: string::String,
+        seat_number:u64,
+        owner:address,
+        event_date:u64,
+        message: string::String,
+    }
+
     // Error codes
     #[error]
     const NOT_ENOUGH_FUNDS: vector<u8> = b"Insufficient funds for gas and NFT transfer";
@@ -54,6 +63,10 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     const NOT_BUYER: vector<u8> = b"Sender is not buyer";
     #[error]
     const NOT_AUTHORISED_TO_BUY: vector<u8> = b"Recipient is not whitelisted";
+    #[error]
+    const INVALID_TICKET_TO_BUY: vector<u8> = b"Unable to buy ticket";
+    #[error]
+    const INVALID_TOTAL_SEAT: vector<u8> = b"Value should be greater than zero";
 
     fun init(ctx: &mut TxContext) {
         transfer::share_object(Creator{
@@ -134,7 +147,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     #[allow(unused_variable)]
     public entry fun resale(
-        nft: TicketNFT,
+        mut nft: TicketNFT,
+        updated_price:u64,
         recipient:address,
         ctx: &mut TxContext
         ) {
@@ -142,12 +156,14 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         let sender = tx_context::sender(ctx);
         assert!(sender == nft.owner, NOT_OWNER);
         assert!(vector::contains(&nft.whitelisted_addresses, &recipient),NOT_AUTHORISED_TO_BUY);
+        
+        nft.price = updated_price;
 
         let initiate_resale = InitiateResale {
             id: object::new(ctx),
             seller:sender,
             buyer:recipient,
-            price:nft.price,
+            price:updated_price,
             nft
         };
         transfer::public_transfer(initiate_resale,recipient);
@@ -155,7 +171,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     #[allow(lint(self_transfer))]
     public fun buy_ticket(
-    coin: &mut Coin<IOTA>, 
+    coin: &mut Coin<IOTA>,
     seat_number: u64,
     buyable_tickets: &mut AvailableTicketsToBuy,
     ctx: &mut TxContext
@@ -176,11 +192,21 @@ module independent_ticketing_system::independent_ticketing_system_nft {
                 transfer::public_transfer(payment, deleted_nft.creator);
                 
                 deleted_nft.owner = sender;
+
+                event::emit(TicketBoughtSuccessfully {
+                    name: deleted_nft.name,
+                    seat_number:deleted_nft.seat_number,
+                    owner:deleted_nft.owner,
+                    event_date:deleted_nft.event_date,
+                    message: string::utf8(b"NFT bought successfully"),
+                });
+
                 transfer::public_transfer(deleted_nft, sender);
                 break
             };
             i = i + 1;
         };
+        assert!(i <length,INVALID_TICKET_TO_BUY);
     }
 
     #[allow(lint(self_transfer))]
@@ -224,6 +250,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     fun set_total_seat(value:u64,total_seat: &mut TotalSeat) {
+        assert!(value>0,INVALID_TOTAL_SEAT);
         total_seat.value = value;
     }
 
