@@ -156,7 +156,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     #[allow(lint(self_transfer))]
     public fun buy_ticket(
     coin: &mut Coin<IOTA>, 
-    nft_id: &mut UID,
+    seat_number: u64,
     buyable_tickets: &mut AvailableTicketsToBuy,
     ctx: &mut TxContext
     ) {
@@ -167,7 +167,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         while (i < length) {
             // Create a copy of the NFT data instead of keeping a reference
             let current_nft = vector::borrow(&buyable_tickets.nfts, i);
-            if (&current_nft.id == nft_id) {
+            if (&current_nft.seat_number == seat_number) {
                 let mut deleted_nft = vector::remove(&mut buyable_tickets.nfts, i);
                 
                 assert!(vector::contains(&deleted_nft.whitelisted_addresses, &sender), NOT_AUTHORISED_TO_BUY);
@@ -268,4 +268,5 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         };
         total_seat
     }
+    
 }
