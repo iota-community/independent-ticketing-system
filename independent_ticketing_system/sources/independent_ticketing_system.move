@@ -84,7 +84,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         });
     }
 
-    public entry fun mint_ticket(
+    public fun mint_ticket(
         event_id: string::String,
         event_date: u64,
         royalty_percentage :u64,
@@ -125,7 +125,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         transfer::public_transfer(nft,sender);
     }
 
-    public entry fun enable_ticket_to_buy(nft:TicketNFT,creator: &mut Creator,available_tickets: &mut AvailableTicketsToBuy,ctx: &mut TxContext) {
+    public fun enable_ticket_to_buy(nft:TicketNFT,creator: &mut Creator,available_tickets: &mut AvailableTicketsToBuy,ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
 
         assert!(sender==creator.address,NOT_CREATOR);
@@ -133,7 +133,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         vector::push_back(&mut available_tickets.nfts,nft);
     }
 
-    public entry fun transfer_ticket(
+    public fun transfer_ticket(
         mut nft: TicketNFT,
         recipient: address,
         ctx: &mut TxContext
@@ -146,7 +146,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     #[allow(unused_variable)]
-    public entry fun resale(
+    public fun resale(
         mut nft: TicketNFT,
         updated_price:u64,
         recipient:address,
@@ -210,7 +210,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     #[allow(lint(self_transfer))]
-    public entry fun buy_resale(coin: &mut Coin<IOTA>, initiated_resale: InitiateResale,ctx: &mut TxContext) {
+    public fun buy_resale(coin: &mut Coin<IOTA>, initiated_resale: InitiateResale,ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
         let InitiateResale {id: id1,seller: seller1,buyer: buyer1,price: price1,nft: mut nft1} = initiated_resale;
         
@@ -232,7 +232,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     #[allow(unused_variable)]
-    public entry fun burn(nft: TicketNFT, ctx: &mut TxContext) {
+    public fun burn(nft: TicketNFT, ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
         assert!(sender == nft.owner, NOT_OWNER);
 
@@ -255,7 +255,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     }
 
     #[allow(unused_variable)]
-    public entry fun whitelist_buyer(user:address,nft: &mut TicketNFT) {
+    public fun whitelist_buyer(user:address,nft: &mut TicketNFT) {
         vector::push_back(&mut nft.whitelisted_addresses,user);
     }
 
