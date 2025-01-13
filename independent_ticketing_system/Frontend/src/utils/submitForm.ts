@@ -1,10 +1,14 @@
 import { IotaClient } from "@iota/iota-sdk/client";
 import { formDataType, OpenFormState } from "../type";
-import { burn_Ticket } from "./Burn";
-import { buyResaleTicket } from "./BuyResale";
-import { mint_Ticket } from "./Mint";
-import { resale_Ticket } from "./Resale";
-import { tranfer_Ticket } from "./Transfer";
+import { burnTicket } from "./burn";
+import { buyResellTicket } from "./buyResell";
+import { mintTicket } from "./mint";
+import { resellTicket } from "./resell";
+import { tranferTicket } from "./transfer";
+import { buyTicket } from "./buyTicket";
+import { enableTicketToBuy } from "./enableTicketToBuy";
+import { whiteListBuyer } from "./whiteListBuyer";
+import { NavigateFunction } from "react-router-dom";
 
 export default (
   e: any,
@@ -12,56 +16,107 @@ export default (
   formData: formDataType,
   resetFormData: () => void,
   packageId: any,
-  address: string,
+  total_seats_object: any,
+  creator_object: any,
+  AvailableTickets_to_buy_object: any,
   signAndExecuteTransaction: any,
   client: IotaClient,
+  navigate: NavigateFunction,
+  setLoading: any,
 ) => {
   e.preventDefault();
   switch (openForm) {
     case "Mint":
-      mint_Ticket(
+      mintTicket(
         formData,
         resetFormData,
         packageId,
-        address,
+        creator_object,
+        total_seats_object,
         signAndExecuteTransaction,
         client,
+        navigate,
+        setLoading,
       );
       break;
     case "Burn":
-      burn_Ticket(
+      burnTicket(
         formData,
         resetFormData,
         packageId,
         signAndExecuteTransaction,
         client,
+        navigate,
+        setLoading,
       );
       break;
-    case "BuyResale":
-      buyResaleTicket(
+    case "BuyResell":
+      buyResellTicket(
         formData,
         resetFormData,
         packageId,
         signAndExecuteTransaction,
         client,
+        navigate,
+        setLoading,
       );
       break;
-    case "Resale":
-      resale_Ticket(
+    case "Resell":
+      resellTicket(
         formData,
         resetFormData,
         packageId,
         signAndExecuteTransaction,
         client,
+        navigate,
+        setLoading,
       );
       break;
     case "Transfer":
-      tranfer_Ticket(
+      tranferTicket(
         formData,
         resetFormData,
         packageId,
         signAndExecuteTransaction,
         client,
+        navigate,
+        setLoading,
+      );
+      break;
+    case "BuyTicket":
+      buyTicket(
+        formData,
+        resetFormData,
+        packageId,
+        AvailableTickets_to_buy_object,
+        signAndExecuteTransaction,
+        client,
+        navigate,
+        setLoading,
+      );
+      break;
+    case "EnableTicketToBuy":
+      enableTicketToBuy(
+        formData,
+        resetFormData,
+        packageId,
+        creator_object,
+        AvailableTickets_to_buy_object,
+        signAndExecuteTransaction,
+        client,
+        navigate,
+        setLoading,
+      );
+      break;
+    case "WhiteListBuyer":
+      whiteListBuyer(
+        formData,
+        resetFormData,
+        packageId,
+        signAndExecuteTransaction,
+        client,
+        navigate,
+        setLoading,
       );
       break;
     default:
