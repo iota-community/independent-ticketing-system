@@ -1,14 +1,15 @@
 const styles = {
   formContainer: {
-    maxWidth: "500px",
-    margin: "auto",
+    marginTop:"1rem",
+    width:'50%',
     padding: "1rem",
-    background: "#1e2631",
+    background: "#1e1e1e",
     borderRadius: "8px",
   },
   formRoot: {
     display: "flex",
     flexDirection: "column",
+    justifyContent:"center",
     gap: "1rem",
   },
   formField: {

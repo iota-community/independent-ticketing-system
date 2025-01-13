@@ -1,24 +1,32 @@
 import * as Form from "@radix-ui/react-form";
 import styles from "../style";
-import Button from "./Button";
+import Button from "./molecules/Button";
 import { OpenFormState } from "../type";
-import { TextField } from "@radix-ui/themes";
+import { Box, TextField } from "@radix-ui/themes";
 import { useCreateForm } from "../hooks/useCreateForm";
 import submitForm from "../utils/submitForm";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
-  const {packageId,
-    address,
+  const {
+    packageId,
+    total_seats_object,
+    creator_object,
+    AvailableTickets_to_buy_object,
     signAndExecuteTransaction,
     client,
     formData,
     updateFormData,
-    resetFormData} = useCreateForm();
+    resetFormData,
+  } = useCreateForm();
+  const [loading,setLoading] = useState<boolean>(false);
+  const navigate = useNavigate();
   return (
     <div style={styles.formContainer}>
       <h1 style={{ textAlign: "center" }}>{openForm}</h1>
       <Form.Root style={styles.formRoot}>
-        {(openForm === "Mint" || openForm === "BuyResale") && (
+        {(openForm === "BuyResell" || openForm === "BuyTicket") && (
           <Form.Field style={styles.formField}>
             <Form.Label style={styles.formLabel}>IOTA Coin ID</Form.Label>
             <Form.Control asChild>
@@ -26,7 +34,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
                 size="2"
                 placeholder="0X2::coin::IOTA"
                 value={formData.coin}
-                onChange={e => updateFormData("coin",e.target.value)}
+                onChange={(e) => updateFormData("coin", e.target.value)}
               />
             </Form.Control>
           </Form.Field>
@@ -38,7 +46,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
             <Form.Control asChild>
               <TextField.Root
                 value={formData?.eventId}
-                onChange={e => updateFormData("eventId",e.target.value)}
+                onChange={(e) => updateFormData("eventId", e.target.value)}
                 size="2"
                 placeholder="event Id"
               />
@@ -52,9 +60,9 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
             <Form.Control asChild>
               <TextField.Root
                 value={formData.eventdate}
-                onChange={e => updateFormData("eventdate",e.target.value)}
+                onChange={(e) => updateFormData("eventdate", e.target.value)}
                 size="2"
-                placeholder="Event Date"
+                placeholder="E.g. 15/01/2025 => 10012025"
               />
             </Form.Control>
           </Form.Field>
@@ -66,39 +74,11 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
             <Form.Control asChild>
               <TextField.Root
                 value={formData.royaltyPercentage}
-                onChange={e => updateFormData("royaltyPercentage",e.target.value)}
+                onChange={(e) =>
+                  updateFormData("royaltyPercentage", e.target.value)
+                }
                 size="2"
-                placeholder="E.g. 2"
-              />
-            </Form.Control>
-          </Form.Field>
-        )}
-
-        {openForm === "Mint" && (
-          <Form.Field style={styles.formField}>
-            <Form.Label style={styles.formLabel}>Package Creator</Form.Label>
-            <Form.Control asChild>
-              <TextField.Root
-                value={formData.packageCreator}
-                onChange={e => updateFormData("packageCreator",e.target.value)}
-                size="2"
-                placeholder="Package Creator"
-              />
-            </Form.Control>
-          </Form.Field>
-        )}
-
-        {openForm === "Mint" && (
-          <Form.Field style={styles.formField}>
-            <Form.Label style={styles.formLabel}>
-              Total Seat Object Id
-            </Form.Label>
-            <Form.Control asChild>
-              <TextField.Root
-                value={formData.totalSeat}
-                onChange={e => updateFormData("totalSeat",e.target.value)}
-                size="2"
-                placeholder="Total Seat"
+                placeholder="E.g. 2 => 2%"
               />
             </Form.Control>
           </Form.Field>
@@ -110,7 +90,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
             <Form.Control asChild>
               <TextField.Root
                 value={formData.price}
-                onChange={e => updateFormData("price",e.target.value)}
+                onChange={(e) => updateFormData("price", e.target.value)}
                 size="2"
                 placeholder="Price"
               />
@@ -119,14 +99,14 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {(openForm === "Transfer" ||
-          openForm === "Resale" ||
-          openForm === "Burn") && (
+          openForm === "Resell" ||
+          openForm === "Burn" || openForm === "EnableTicketToBuy" || openForm === "WhiteListBuyer") && (
           <Form.Field style={styles.formField}>
             <Form.Label style={styles.formLabel}>NFT ID</Form.Label>
             <Form.Control asChild>
               <TextField.Root
                 value={formData.nft}
-                onChange={e => updateFormData("nft",e.target.value)}
+                onChange={(e) => updateFormData("nft", e.target.value)}
                 size="2"
                 placeholder="NFT Id"
               />
@@ -134,13 +114,13 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
           </Form.Field>
         )}
 
-        {(openForm === "Transfer" || openForm === "Resale") && (
+        {(openForm === "Transfer" || openForm === "Resell" || openForm === "WhiteListBuyer") && (
           <Form.Field style={styles.formField}>
             <Form.Label style={styles.formLabel}>Recipient</Form.Label>
             <Form.Control asChild>
               <TextField.Root
                 value={formData.recipient}
-                onChange={e => updateFormData("recipient",e.target.value)}
+                onChange={(e) => updateFormData("recipient", e.target.value)}
                 size="2"
                 placeholder="Recipient address"
               />
@@ -148,22 +128,63 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
           </Form.Field>
         )}
 
-        {openForm === "BuyResale" && (
+        {openForm === "BuyResell" && (
           <Form.Field style={styles.formField}>
             <Form.Label style={styles.formLabel}>
-              Initiated Resale ID
+              Initiated Resell ID
             </Form.Label>
             <Form.Control asChild>
               <TextField.Root
-                value={formData.initiatedResale}
-                onChange={e => updateFormData("initiatedResale",e.target.value)}
+                value={formData.initiatedResell}
+                onChange={(e) =>
+                  updateFormData("initiatedResell", e.target.value)
+                }
                 size="2"
-                placeholder="Initialed Resale"
+                placeholder="Initialed Resell"
               />
             </Form.Control>
           </Form.Field>
         )}
-        <Button onClick={(e) => submitForm(e,openForm,formData,resetFormData,packageId,address.address,signAndExecuteTransaction,client)} title={"Submit"} />
+        {openForm === "BuyTicket" && (
+          <Form.Field style={styles.formField}>
+            <Form.Label style={styles.formLabel}>
+              Seat Number
+            </Form.Label>
+            <Form.Control asChild>
+              <TextField.Root
+                value={formData.initiatedResell}
+                onChange={(e) =>
+                  updateFormData("seatNumber", e.target.value)
+                }
+                size="2"
+                placeholder="Initialed Resell"
+              />
+            </Form.Control>
+          </Form.Field>
+        )}
+        <Box style={{ display: "flex", justifyContent: "center" }}>
+          <Button
+            disabled={loading}
+            onClick={(e) => {
+              setLoading(true);
+              submitForm(
+                e,
+                openForm,
+                formData,
+                resetFormData,
+                packageId,
+                total_seats_object,
+                creator_object,
+                AvailableTickets_to_buy_object,
+                signAndExecuteTransaction,
+                client,
+                navigate,
+                setLoading
+              )
+            }}
+            title={"Submit"}
+          />
+        </Box>
       </Form.Root>
     </div>
   );
