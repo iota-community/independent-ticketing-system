@@ -1,15 +1,9 @@
-import { ToggleFormProp } from "../type";
-import Button from "./Button";
-
-export default function Mint({setOpenForm}:ToggleFormProp) {
+import InputForm from "./Form";
+import { Flex } from "@radix-ui/themes";
+export default function Mint() {
   return (
-    <div>
-      <Button
-        title="Mint Ticket"
-        onClick={() => {
-          setOpenForm("Mint");
-        }}
-      />
-    </div>
+    <Flex justify={"center"}>
+      <InputForm openForm={"Mint"} />
+    </Flex>
   );
 }
