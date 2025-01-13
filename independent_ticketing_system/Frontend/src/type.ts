@@ -1,6 +1,7 @@
 export interface ButtonProps {
     title:string,
-    onClick: () => void
+    onClick: () => void,
+    disabled: boolean
 }
 
 export interface ToggleFormProp {
@@ -8,7 +9,7 @@ export interface ToggleFormProp {
 }
 
 export interface OpenFormState {
-    openForm: "Mint" | "Burn" | "Transfer" | "Resale" | "BuyResale" | "";
+    openForm: "Mint" | "Burn" | "Transfer" | "Resell" | "BuyResell" | "EnableTicketToBuy" | "BuyTicket" | "WhiteListBuyer" | ""; 
 }
 
 export interface formDataType {
@@ -21,5 +22,19 @@ export interface formDataType {
     price?:string,
     nft?:string,
     recipient?:string,
-    initiatedResale?:string
+    initiatedResell?:string,
+    seatNumber?:string,
+    buyableTickets?:string
+}
+
+export interface OperationType{
+    name: OpenFormState["openForm"],
+    description: string,
+    path?:string
+}
+
+export interface NftFormDataType {
+    price:string,
+    nft:string,
+    recipient:string
 }
