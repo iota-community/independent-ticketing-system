@@ -16,7 +16,7 @@ export const resellTicket = (
     const tx = new Transaction();
     tx.setGasBudget(50000000);
     tx.moveCall({
-      target: `${packageId}::independent_ticketing_system_nft::resell`,
+      target: `${packageId}::independent_ticketing_system_nft::resale`,
       arguments: [
         tx.object(formData.nft as string),
         tx.pure.u64(formData.price as string),

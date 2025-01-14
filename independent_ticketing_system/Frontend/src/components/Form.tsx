@@ -27,7 +27,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
       <h1 style={{ textAlign: "center" }}>{openForm}</h1>
       <Form.Root style={styles.formRoot}>
         {(openForm === "BuyResell" || openForm === "BuyTicket") && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>IOTA Coin ID</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -41,7 +41,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {openForm === "Mint" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>Event ID</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -55,7 +55,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {openForm === "Mint" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>Event Date</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -69,7 +69,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {openForm === "Mint" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>Royalty Percentage</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -85,7 +85,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {openForm === "Mint" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>Price</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -101,7 +101,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         {(openForm === "Transfer" ||
           openForm === "Resell" ||
           openForm === "Burn" || openForm === "EnableTicketToBuy" || openForm === "WhiteListBuyer") && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>NFT ID</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -115,7 +115,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {(openForm === "Transfer" || openForm === "Resell" || openForm === "WhiteListBuyer") && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>Recipient</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -129,7 +129,7 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
         )}
 
         {openForm === "BuyResell" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>
               Initiated Resell ID
             </Form.Label>
@@ -146,18 +146,18 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
           </Form.Field>
         )}
         {openForm === "BuyTicket" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>
               Seat Number
             </Form.Label>
             <Form.Control asChild>
               <TextField.Root
-                value={formData.initiatedResell}
+                value={formData.seatNumber}
                 onChange={(e) =>
                   updateFormData("seatNumber", e.target.value)
                 }
                 size="2"
-                placeholder="Initialed Resell"
+                placeholder="Seat Number"
               />
             </Form.Control>
           </Form.Field>

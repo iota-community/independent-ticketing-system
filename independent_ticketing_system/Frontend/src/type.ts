@@ -1,6 +1,6 @@
 export interface ButtonProps {
     title:string,
-    onClick: () => void,
+    onClick: (e:any) => void,
     disabled: boolean
 }
 

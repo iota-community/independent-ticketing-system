@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useCreateForm } from "./hooks/useCreateForm";
 
 function App() {
-  const creator_object = useNetworkVariable("creator_object");
+  const creator_object = useNetworkVariable("creator_object" as never);
   const [isCreator, setIsCreator] = useState<boolean>(false);
   const { address } = useCreateForm();
   useEffect(() => {

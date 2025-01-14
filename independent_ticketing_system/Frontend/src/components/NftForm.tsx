@@ -24,7 +24,7 @@ const NftForm = ({ openForm, nft }: { openForm: OpenFormState["openForm"],nft:st
     <div style={styles.formContainer}>
       <h1 style={{ textAlign: "center" }}>{openForm}</h1>
       <Form.Root style={styles.formRoot}>
-        <Form.Field style={styles.formField}>
+        <Form.Field name="" style={styles.formField}>
           <Form.Label style={styles.formLabel}>NFT ID</Form.Label>
           <Form.Control asChild>
             <TextField.Root
@@ -37,7 +37,7 @@ const NftForm = ({ openForm, nft }: { openForm: OpenFormState["openForm"],nft:st
         </Form.Field>
 
         {openForm === "Resell" && (
-          <Form.Field style={styles.formField}>
+          <Form.Field name="" style={styles.formField}>
             <Form.Label style={styles.formLabel}>Price</Form.Label>
             <Form.Control asChild>
               <TextField.Root
@@ -50,7 +50,7 @@ const NftForm = ({ openForm, nft }: { openForm: OpenFormState["openForm"],nft:st
           </Form.Field>
         )}
 
-        {openForm!=="Burn" && <Form.Field style={styles.formField}>
+        {openForm!=="Burn" && <Form.Field name="" style={styles.formField}>
           <Form.Label style={styles.formLabel}>Recipient</Form.Label>
           <Form.Control asChild>
             <TextField.Root

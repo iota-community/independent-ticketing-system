@@ -11,7 +11,7 @@ import CopyToClipboard from "./molecules/CopyToClipboard";
 
 export default function OwnedObjects() {
   const [tickets, setTickets] = useState<null | any[]>(null);
-  const packageId = useNetworkVariable("packageId");
+  const packageId = useNetworkVariable("packageId" as never);
   const [loading, setLoading] = useState<boolean>(true);
   const client = new IotaClient({
     url: getFullnodeUrl("testnet"),

@@ -1,4 +1,4 @@
-const styles = {
+const styles: { [key: string]: React.CSSProperties } = {
   formContainer: {
     marginTop:"1rem",
     width:'50%',

@@ -1,17 +1,37 @@
 import { Flex, Heading } from "@radix-ui/themes";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { OpenFormState } from "../type";
 import { operations } from "../constants";
 import Button from "./molecules/Button";
 import Form from "./Form";
-import { useNetworkVariable } from "../networkConfig";
 import { useCreateForm } from "../hooks/useCreateForm";
 import OwnedObjects from "./OwnedTickets";
+import { useNetworkVariable } from "../networkConfig";
 
 export default function Home() {
   const [openForm, setOpenForm] = useState<OpenFormState["openForm"]>("");
-  const creator_object = useNetworkVariable("creator_object");
   const { address } = useCreateForm();
+  const creator_object = useNetworkVariable("creator_object" as never);
+  const [isCreator, setIsCreator] = useState<boolean>(false);
+  useEffect(() => {
+    const body = {
+      jsonrpc: "2.0",
+      id: 1,
+      method: "iota_getObject",
+      params: [creator_object, { showContent: true }],
+    };
+    fetch("https://indexer.testnet.iota.cafe/", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    })
+      .then((res) => res.json())
+      .then((res) => {
+        setIsCreator(address.address == res.result.data.content.fields.address);
+      });
+  }, [address]);
   return (
     <Flex direction={"column"} m={"6"} align={"center"}>
       {address ? (
@@ -21,7 +41,7 @@ export default function Home() {
               (value, index) =>
                 ((value.name === "EnableTicketToBuy" &&
                   address &&
-                  creator_object == address.address) ||
+                  isCreator) ||
                   value.name !== "EnableTicketToBuy") && (
                   <Button
                     key={index}

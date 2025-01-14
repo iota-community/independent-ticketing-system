@@ -7,9 +7,9 @@ import { useCreateForm } from "../hooks/useCreateForm";
 export default function AvailableTickets() {
   const [tickets, setTickets] = useState<null | any[]>(null);
   const AvailableTickets_to_buy_object = useNetworkVariable(
-    "AvailableTickets_to_buy_object",
+    "AvailableTickets_to_buy_object" as never
   );
-  const packageId = useNetworkVariable("packageId");
+  const packageId = useNetworkVariable("packageId" as never);
   const client = new IotaClient({
     url: getFullnodeUrl("testnet"),
   });
