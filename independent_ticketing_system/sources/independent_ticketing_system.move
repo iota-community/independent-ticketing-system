@@ -84,6 +84,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         });
     }
 
+    #[allow(lint(self_transfer))]
     public fun mint_ticket(
         event_id: string::String,
         event_date: u64,
@@ -259,41 +260,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         vector::push_back(&mut nft.whitelisted_addresses,user);
     }
 
-    // Just for testing purpose
-    public fun create_TicketNFT(
-        name: string::String,
-        creator: address,
-        owner: address, 
-        event_id: string::String,
-        seat_number: u64,
-        event_date: u64,
-        royalty_percentage: u64,
-        price:u64,
-        whitelisted_addresses: vector<address>,
-        ctx: &mut TxContext
-        ) : TicketNFT {
-        let nft : TicketNFT = TicketNFT {
-            id:object::new(ctx),
-            name,
-            creator,
-            owner,
-            event_id,
-            seat_number,
-            event_date,
-            royalty_percentage,
-            price,
-            whitelisted_addresses
-        };
-        nft
+    #[test_only]
+    public fun test_init(ctx: &mut TxContext) {
+        init(ctx);
     }
-
-    #[allow(unused_let_mut)]
-    public fun create_TotalSeat(value:u64,ctx: &mut TxContext) : TotalSeat {
-        let mut total_seat = TotalSeat {
-            id:object::new(ctx),
-            value
-        };
-        total_seat
-    }
-    
 }
