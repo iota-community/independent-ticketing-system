@@ -9,14 +9,10 @@ const { networkConfig, useNetworkVariable, useNetworkVariables } =
     testnet: {
       url: getFullnodeUrl("testnet"),
       variables: {
-        packageId:
-          "<YOUR_PACKAGE_ID>",
-        total_seats_object:
-          "<YOUR_TOTAL_SEAT_OBJECT>",
-        creator_object:
-          "<YOUR_CREATOR_OBJECT>",
-        AvailableTickets_to_buy_object:
-          "<YOUR_AVAILABLE_TICKETS_OBJECT>",
+        packageId: "<YOUR_PACKAGE_ID>",
+        creatorCap: "<YOUR_CREATORCAP_ADDRESS>",
+        eventObject: "<YOUR_EVENTOBJECT_ADDRESS>",
+
       },
     },
     mainnet: {
