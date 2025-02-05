@@ -11,14 +11,14 @@ import { useNetworkVariable } from "../networkConfig";
 export default function Home() {
   const [openForm, setOpenForm] = useState<OpenFormState["openForm"]>("");
   const { address } = useCreateForm();
-  const creator_object = useNetworkVariable("creator_object" as never);
+  const creatorCap = useNetworkVariable("creatorCap" as never);
   const [isCreator, setIsCreator] = useState<boolean>(false);
   useEffect(() => {
     const body = {
       jsonrpc: "2.0",
       id: 1,
       method: "iota_getObject",
-      params: [creator_object, { showContent: true }],
+      params: [creatorCap, { showContent: true }],
     };
     fetch("https://indexer.testnet.iota.cafe/", {
       method: "POST",

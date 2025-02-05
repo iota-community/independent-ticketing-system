@@ -10,11 +10,8 @@ import { useNetworkVariable } from "../networkConfig";
 
 export const useCreateForm = () => {
   const packageId = useNetworkVariable("packageId" as never);
-  const total_seats_object = useNetworkVariable("total_seats_object" as never);
-  const creator_object = useNetworkVariable("creator_object" as never);
-  const AvailableTickets_to_buy_object = useNetworkVariable(
-    "AvailableTickets_to_buy_object" as never
-  );
+  const eventObject = useNetworkVariable("eventObject" as never);
+  const creatorCap = useNetworkVariable("creatorCap" as never);
   const [address] = useAccounts();
   useEffect(() => console.log("Address = ", address), [address]);
   const { mutate: signAndExecuteTransaction } = useSignAndExecuteTransaction();
@@ -86,9 +83,8 @@ export const useCreateForm = () => {
     formData,
     updateFormData,
     resetFormData,
-    total_seats_object,
-    creator_object,
-    AvailableTickets_to_buy_object,
+    eventObject,
+    creatorCap,
     nftFormData,
     updateNftFormData,
     resetNftFormData,

@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useCreateForm } from "./hooks/useCreateForm";
 
 function App() {
-  const creator_object = useNetworkVariable("creator_object" as never);
+  const creatorCap = useNetworkVariable("creatorCap" as never);
   const [isCreator, setIsCreator] = useState<boolean>(false);
   const { address } = useCreateForm();
   useEffect(() => {
@@ -15,7 +15,7 @@ function App() {
       jsonrpc: "2.0",
       id: 1,
       method: "iota_getObject",
-      params: [creator_object, { showContent: true }],
+      params: [creatorCap, { showContent: true }],
     };
     fetch("https://indexer.testnet.iota.cafe/", {
       method: "POST",

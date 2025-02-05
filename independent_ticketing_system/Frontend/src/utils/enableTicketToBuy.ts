@@ -7,8 +7,8 @@ export const enableTicketToBuy = (
   formData: formDataType,
   setFormData: React.Dispatch<React.SetStateAction<formDataType>>,
   packageId: any,
-  creator_object: any,
-  AvailableTickets_to_buy_object: any,
+  creatorCap: any,
+  event_object:any,
   signAndExecuteTransaction: any,
   client: IotaClient,
   navigate: NavigateFunction,
@@ -20,9 +20,9 @@ export const enableTicketToBuy = (
     tx.moveCall({
       target: `${packageId}::independent_ticketing_system_nft::enable_ticket_to_buy`,
       arguments: [
+        tx.object(creatorCap),
         tx.object(formData.nft as string),
-        tx.object(creator_object),
-        tx.object(AvailableTickets_to_buy_object),
+        tx.object(event_object),
       ],
     });
     return tx;

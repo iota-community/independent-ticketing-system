@@ -11,9 +11,8 @@ import { useNavigate } from "react-router-dom";
 const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
   const {
     packageId,
-    total_seats_object,
-    creator_object,
-    AvailableTickets_to_buy_object,
+    eventObject,
+    creatorCap,
     signAndExecuteTransaction,
     client,
     formData,
@@ -173,9 +172,8 @@ const InputForm = ({ openForm }: { openForm: OpenFormState["openForm"] }) => {
                 formData,
                 resetFormData,
                 packageId,
-                total_seats_object,
-                creator_object,
-                AvailableTickets_to_buy_object,
+                eventObject,
+                creatorCap,
                 signAndExecuteTransaction,
                 client,
                 navigate,

@@ -7,7 +7,7 @@ export const buyTicket = (
   formData: formDataType,
   setFormData: React.Dispatch<React.SetStateAction<formDataType>>,
   packageId: any,
-  AvailableTickets_to_buy_object: any,
+  event_object:any,
   signAndExecuteTransaction: any,
   client: IotaClient,
   navigate: NavigateFunction,
@@ -21,7 +21,7 @@ export const buyTicket = (
       arguments: [
         tx.object(formData.coin as string),
         tx.pure.u64(formData.seatNumber as string),
-        tx.object(AvailableTickets_to_buy_object),
+        tx.object(event_object),
       ],
     });
     return tx;
