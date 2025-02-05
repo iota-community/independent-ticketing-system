@@ -17,14 +17,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         whitelisted_addresses: vector<address>
     }
 
-    public struct Creator has key, store{
-        id:UID,
-        address: address
-    }
-
-    public struct TotalSeat has key, store{
-        id: UID,
-        value: u64
+    public struct CreatorCap has key {
+        id: UID
     }
 
     public struct InitiateResale has key, store {
@@ -35,9 +29,10 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         price:u64,
     }
 
-    public struct AvailableTicketsToBuy has key {
+    public struct EventObject has key, store {
         id: UID,
-        nfts: vector<TicketNFT>
+        available_tickets_to_buy: vector<TicketNFT>,
+        total_seat: u64
     }
 
     public struct TicketBoughtSuccessfully has copy, drop {
@@ -54,8 +49,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     #[error]
     const INVALID_ROYALTY: vector<u8> = b"Royalty percentage must be between 0 and 100";
     #[error]
-    const NOT_CREATOR: vector<u8> = b"Only owner can mint new tickets";
-    #[error]
     const NOT_OWNER: vector<u8> = b"Sender is not owner";
     #[error]
     const ALL_TICKETS_SOLD: vector<u8> = b"All tickets has been sold out";
@@ -69,41 +62,36 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     const INVALID_TOTAL_SEAT: vector<u8> = b"Value should be greater than zero";
 
     fun init(ctx: &mut TxContext) {
-        transfer::share_object(Creator{
-            id: object::new(ctx),
-            address:tx_context::sender(ctx)
-        });
-        transfer::share_object(TotalSeat {
-            id: object::new(ctx),
-            value: 300
-        });
+        let sender = ctx.sender();
+        transfer::transfer(CreatorCap{
+            id: object::new(ctx)
+        },sender);
 
-        transfer::share_object(AvailableTicketsToBuy {
+        transfer::share_object(EventObject {
             id: object::new(ctx),
-            nfts : vector::empty<TicketNFT>()
-        });
+            available_tickets_to_buy: vector::empty<TicketNFT>(),
+            total_seat: 300
+        })
     }
 
     #[allow(lint(self_transfer))]
     public fun mint_ticket(
+        _: &CreatorCap,
         event_id: string::String,
         event_date: u64,
         royalty_percentage :u64,
-        package_creator: &mut Creator,
-        total_seat: &mut TotalSeat,
+        event_object: &mut EventObject,
         price: u64,
         ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
-
-        assert!(sender==package_creator.address,NOT_CREATOR);
-        assert!(total_seat.value>0,ALL_TICKETS_SOLD);
+        assert!(event_object.total_seat>0,ALL_TICKETS_SOLD);
         assert!(royalty_percentage >= 0 && royalty_percentage <= 100, INVALID_ROYALTY);
 
 
         let name: string::String = string::utf8(b"Event Ticket NFT");
 
-        let nft_count = total_seat.value;
+        let nft_count = event_object.total_seat;
 
         let mut whitelisted_addresses = vector::empty<address>();
         vector::push_back(&mut whitelisted_addresses, sender);
@@ -114,24 +102,24 @@ module independent_ticketing_system::independent_ticketing_system_nft {
             creator: sender,
             owner: sender,
             event_id,
-            seat_number:total_seat.value,
+            seat_number:event_object.total_seat,
             event_date,
             royalty_percentage,
             price,
             whitelisted_addresses
         };
 
-        set_total_seat(nft_count-1,total_seat);
+        set_total_seat(nft_count-1,event_object);
 
         transfer::public_transfer(nft,sender);
     }
 
-    public fun enable_ticket_to_buy(nft:TicketNFT,creator: &mut Creator,available_tickets: &mut AvailableTicketsToBuy,ctx: &mut TxContext) {
-        let sender = tx_context::sender(ctx);
-
-        assert!(sender==creator.address,NOT_CREATOR);
-
-        vector::push_back(&mut available_tickets.nfts,nft);
+    public fun enable_ticket_to_buy(
+        _: &CreatorCap, 
+        nft:TicketNFT,
+        event_object: &mut EventObject
+    ) {
+        vector::push_back(&mut event_object.available_tickets_to_buy,nft);
     }
 
     public fun transfer_ticket(
@@ -152,7 +140,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         updated_price:u64,
         recipient:address,
         ctx: &mut TxContext
-        ) {
+    ) {
 
         let sender = tx_context::sender(ctx);
         assert!(sender == nft.owner, NOT_OWNER);
@@ -174,18 +162,18 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     public fun buy_ticket(
     coin: &mut Coin<IOTA>,
     seat_number: u64,
-    buyable_tickets: &mut AvailableTicketsToBuy,
+    event_object: &mut EventObject,
     ctx: &mut TxContext
     ) {
         let sender = tx_context::sender(ctx);
         let mut i = 0;
-        let length = vector::length(&buyable_tickets.nfts);
+        let length = vector::length(&event_object.available_tickets_to_buy);
         
         while (i < length) {
             // Create a copy of the NFT data instead of keeping a reference
-            let current_nft = vector::borrow(&buyable_tickets.nfts, i);
+            let current_nft = vector::borrow(&event_object.available_tickets_to_buy, i);
             if (&current_nft.seat_number == seat_number) {
-                let mut deleted_nft = vector::remove(&mut buyable_tickets.nfts, i);
+                let mut deleted_nft = vector::remove(&mut event_object.available_tickets_to_buy, i);
                 
                 assert!(vector::contains(&deleted_nft.whitelisted_addresses, &sender), NOT_AUTHORISED_TO_BUY);
                 
@@ -250,9 +238,9 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         object::delete(id);
     }
 
-    fun set_total_seat(value:u64,total_seat: &mut TotalSeat) {
+    fun set_total_seat(value:u64,event_object: &mut EventObject) {
         assert!(value>0,INVALID_TOTAL_SEAT);
-        total_seat.value = value;
+        event_object.total_seat = value;
     }
 
     #[allow(unused_variable)]
