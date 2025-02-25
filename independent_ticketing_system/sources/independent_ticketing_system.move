@@ -49,11 +49,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     #[error]
     const INVALID_ROYALTY: vector<u8> = b"Royalty percentage must be between 0 and 100";
     #[error]
-    const NOT_OWNER: vector<u8> = b"Sender is not owner";
-    #[error]
     const ALL_TICKETS_SOLD: vector<u8> = b"All tickets has been sold out";
-    #[error]
-    const NOT_BUYER: vector<u8> = b"Sender is not buyer";
     #[error]
     const NOT_AUTHORISED_TO_BUY: vector<u8> = b"Recipient is not whitelisted";
     #[error]
@@ -124,11 +120,8 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     public fun transfer_ticket(
         mut nft: TicketNFT,
-        recipient: address,
-        ctx: &mut TxContext
+        recipient: address
     ) {
-        let sender = tx_context::sender(ctx);
-        assert!(sender == nft.owner, NOT_OWNER);
 
         nft.owner = recipient;
         transfer::public_transfer(nft, recipient);
@@ -143,7 +136,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     ) {
 
         let sender = tx_context::sender(ctx);
-        assert!(sender == nft.owner, NOT_OWNER);
         assert!(vector::contains(&nft.whitelisted_addresses, &recipient),NOT_AUTHORISED_TO_BUY);
         
         nft.price = updated_price;
@@ -170,7 +162,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
         let length = vector::length(&event_object.available_tickets_to_buy);
         
         while (i < length) {
-            // Create a copy of the NFT data instead of keeping a reference
             let current_nft = vector::borrow(&event_object.available_tickets_to_buy, i);
             if (&current_nft.seat_number == seat_number) {
                 let mut deleted_nft = vector::remove(&mut event_object.available_tickets_to_buy, i);
@@ -201,9 +192,7 @@ module independent_ticketing_system::independent_ticketing_system_nft {
     #[allow(lint(self_transfer))]
     public fun buy_resale(coin: &mut Coin<IOTA>, initiated_resale: InitiateResale,ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
-        let InitiateResale {id: id1,seller: seller1,buyer: buyer1,price: price1,nft: mut nft1} = initiated_resale;
-        
-        assert!(sender==buyer1,NOT_BUYER);
+        let InitiateResale {id: id1,seller: seller1,buyer: _buyer1,price: price1,nft: mut nft1} = initiated_resale;
 
         let royalty_fee = (nft1.royalty_percentage/nft1.price)*100;
         assert!(coin.balance().value()>royalty_fee,NOT_ENOUGH_FUNDS);
@@ -222,8 +211,6 @@ module independent_ticketing_system::independent_ticketing_system_nft {
 
     #[allow(unused_variable)]
     public fun burn(nft: TicketNFT, ctx: &mut TxContext) {
-        let sender = tx_context::sender(ctx);
-        assert!(sender == nft.owner, NOT_OWNER);
 
         let TicketNFT { id,
             name,
